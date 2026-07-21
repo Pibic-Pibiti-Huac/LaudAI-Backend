@@ -46,6 +46,26 @@ services:
     networks:
       - laudai-net
 
+  fastapi:
+    build: 
+      context: ./laudAI-server
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./laudAI-server:/app
+    environment:
+      - LLAMACPP_API_KEY=${LLAMACPP_API_KEY}
+      - LLAMACPP_BASE_URL=http://llamacpp-qwen3:8000
+    depends_on:
+      llamacpp-qwen3:
+        condition: service_healthy
+    networks:
+      - laudai-net
+    command: uv run fastapi dev --host 0.0.0.0 --port 8000 
+
 networks:
   laudai-net:
     driver: bridge
