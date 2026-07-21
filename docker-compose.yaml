@@ -1,0 +1,51 @@
+services:
+  llamacpp-qwen3:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: llamacpp-qwen3-8b
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./model:/models
+    environment:
+      - LLAMACPP_API_KEY=${LLAMACPP_API_KEY}
+    command:
+      - "-m"
+      - "/models/qwen3-8B-GGUF/Qwen3-8B-Q4_K_M.gguf"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "-ngl"
+      - "22"
+      - "-c"
+      - "4096"
+      - "-t"
+      - "6"
+      - "-b"
+      - "512"
+      - "--chat-template"
+      - "chatml"
+      - "--flash-attn"
+      - "on"
+      - "--api-key"
+      - "${LLAMACPP_API_KEY}"
+      - "--mlock"
+    devices:
+      - nvidia.com/gpu=all
+    deploy:
+      resources:
+        limits:
+          memory: 10G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+    networks:
+      - laudai-net
+
+networks:
+  laudai-net:
+    driver: bridge
