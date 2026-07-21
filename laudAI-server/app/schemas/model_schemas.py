@@ -4,6 +4,17 @@ class MessageReportText(BaseModel):
     role: str
     report: str
 
+class ReportAnalyze(BaseModel):
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        frozen=True
+    )
+
+    extracao: dict[str, str]
+    avaliacao: dict[str, str]
+    notas: dict[str, int]
+
+
 class MessageModelFullAnalyzeResponse(BaseModel):
     model_config = ConfigDict(
         from_attributes=True,      # Permite validar a partir de objetos (ex: SQLAlchemy/ORM)
@@ -12,6 +23,5 @@ class MessageModelFullAnalyzeResponse(BaseModel):
     )
 
     role: str
-    stars: int
     thinking: str | None
-    feedback: str | None
+    feedback: ReportAnalyze | None

@@ -1,10 +1,10 @@
-from email import message
-
+import json
 from fastapi import (
     APIRouter,
     Form,
     UploadFile,
-    File
+    File,
+    HTTPException
 )
 from app.schemas.model_schemas import (
     MessageModelFullAnalyzeResponse,
@@ -26,11 +26,18 @@ service = ModelService()
 async def model_analyze_report_by_text(query: MessageReportText):
     content, thinking = await service.report_analyze_by_text(query.report)
 
+    try:
+        parsed_content = json.loads(content) # type: ignore
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=502,
+            detail="O modelo retornou uma resposta em formato inválido."
+        )
+
     return MessageModelFullAnalyzeResponse(
         role="assistant",
-        feedback=content,
-        thinking=thinking,
-        stars=5
+        feedback=parsed_content,
+        thinking=thinking
     )
 
 
