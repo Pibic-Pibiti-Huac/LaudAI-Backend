@@ -13,4 +13,5 @@ class MessageModelFullAnalyzeResponse(BaseModel):
 
     role: str
     stars: int
-    feedback: str
+    thinking: str | None
+    feedback: str | None

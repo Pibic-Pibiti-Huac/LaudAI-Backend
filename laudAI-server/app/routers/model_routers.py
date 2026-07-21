@@ -1,3 +1,5 @@
+from email import message
+
 from fastapi import (
     APIRouter,
     Form,
@@ -21,8 +23,16 @@ service = ModelService()
     status_code=200,
     description="endpoint para o LLM analizar todo o laudo pelo texto fornecido."
 )
-def model_analyze_report_by_text(query: MessageReportText):
-    return 
+async def model_analyze_report_by_text(query: MessageReportText):
+    content, thinking = await service.report_analyze_by_text(query.report)
+
+    return MessageModelFullAnalyzeResponse(
+        role="assistant",
+        feedback=content,
+        thinking=thinking,
+        stars=5
+    )
+
 
 @router.post(
     "/full/analyze/file",
