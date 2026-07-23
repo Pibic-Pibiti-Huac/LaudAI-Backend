@@ -17,7 +17,7 @@ class ModelService:
 
     async def report_analyze_by_text(self, report: str):
         return await self.chat(
-            messages=cot_prompt_report_message(report),
+            messages=cot_prompt_report_message(report, examples_on=False),
             temperature=0.0
         )
 

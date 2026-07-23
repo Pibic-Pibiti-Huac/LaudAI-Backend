@@ -1,5 +1,8 @@
 from fastapi import FastAPI
-from app.routers.model_routers import router as model_router
+from app.core.config_app import (
+    include_routers,
+    config_middleware_cors
+) 
 
 app = FastAPI(
     root_path="/api/v1"
@@ -11,4 +14,5 @@ def hello_world():
         "message": "hello_world"
     }
 
-app.include_router(model_router)
+include_routers(app)
+config_middleware_cors(app)

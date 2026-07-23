@@ -1,9 +1,6 @@
 import json
 from fastapi import (
     APIRouter,
-    Form,
-    UploadFile,
-    File,
     HTTPException
 )
 from app.schemas.model_schemas import (
@@ -23,7 +20,7 @@ service = ModelService()
     status_code=200,
     description="endpoint para o LLM analizar todo o laudo pelo texto fornecido."
 )
-async def model_analyze_report_by_text(query: MessageReportText):
+async def model_analyze_report_by_text(query: MessageReportText) -> MessageModelFullAnalyzeResponse:
     content, thinking = await service.report_analyze_by_text(query.report)
 
     try:
@@ -39,21 +36,3 @@ async def model_analyze_report_by_text(query: MessageReportText):
         feedback=parsed_content,
         thinking=thinking
     )
-
-
-@router.post(
-    "/full/analyze/file",
-    status_code=200,
-    description="endpoint para o LLM analizar todo o laudo pelo arquivo fornecido."
-)
-async def upload_report(
-    role: str = Form(...), # os tres pontos indica que é um campo obrigatorio
-    file: UploadFile = File(...)
-):
-    
-    # apenas os dados do arquivo recebido na requisicao, por enquanto
-    return {
-        "role": role,
-        "filename": file.filename,
-        "content_type": file.content_type
-    }

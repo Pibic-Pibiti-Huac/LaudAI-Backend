@@ -9,29 +9,24 @@ services:
       - ./model:/models
     environment:
       - LLAMACPP_API_KEY=${LLAMACPP_API_KEY}
-    command:
-    - "-m"
-    - "/models/qwen3-8B-GGUF/Qwen3-8B-Q4_K_M.gguf"
-    - "--host"
-    - "0.0.0.0"
-    - "--port"
-    - "8000"
-    - "-ngl"
-    - "22"
-    - "-c"
-    - "4096"
-    - "-t"
-    - "6"
-    - "-b"
-    - "512"
-    - "--jinja"
-    - "--reasoning-format"
-    - "deepseek"
-    - "--flash-attn"
-    - "on"
-    - "--api-key"
-    - "${LLAMACPP_API_KEY}"
-    - "--mlock"
+    command: >
+      -m /models/qwen3-8B-GGUF/Qwen3-8B-Q4_K_M.gguf
+      --host 0.0.0.0
+      --port 8000
+      -ngl 99
+      -c 8192
+      -np 1
+      -ctk q8_0
+      -ctv q8_0
+      -t 6
+      -b 512
+      -ub 128
+      --jinja
+      --reasoning-format deepseek
+      --flash-attn on
+      --no-mmap
+      --keep -1
+      --api-key ${LLAMACPP_API_KEY}
     devices:
       - nvidia.com/gpu=all
     deploy:
@@ -40,9 +35,6 @@ services:
           memory: 10G
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
       start_period: 90s
     networks:
       - laudai-net
@@ -65,8 +57,11 @@ services:
         condition: service_healthy
     networks:
       - laudai-net
+      - app-network
     command: uv run fastapi dev --host 0.0.0.0 --port 8000 
 
 networks:
+  app-network:
+    external: true
   laudai-net:
     driver: bridge
