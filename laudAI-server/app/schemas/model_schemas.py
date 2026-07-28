@@ -30,6 +30,8 @@ class MessageModelFullAnalyzeResponse(BaseModel):
 class MessageModel(BaseModel):
     role: str
     prompt: str
+    history: list[dict] = []
+    laudo_text: str = ""
 
 class MessageModelResponse(BaseModel):
     role: str

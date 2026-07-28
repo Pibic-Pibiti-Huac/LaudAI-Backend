@@ -188,7 +188,7 @@ Garanta que o JSON seja BEM FORMADO.
         {"role": "user", "content": user_prompt},
     ]
 
-def default_prompt_model(prompt: str) -> list[dict]:
+def default_prompt_model(prompt: str, history: list[dict] | None = None, laudo_text: str | None = None) -> list[dict]:
     system_prompt = f"""
 Você é um avaliador especializado em qualidade estrutural de laudos de radiografia de tórax.
 As avaliações dos laudos seguem os seguintes critérios: 
@@ -201,7 +201,16 @@ Dessa forma, não afirme que o usuário que definiu esses critérios, mas que fo
 
 Caso contrário, utilize seu conhecimento para responder a pergunta.
 """
-    return [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": prompt}
-    ]
+    messages = [{"role": "system", "content": system_prompt}]
+
+    if laudo_text:
+        messages.append({
+            "role": "system",
+            "content": f"Laudo radiográfico em análise:\n\n{laudo_text}"
+        })
+
+    if history:
+        messages.extend(history)
+
+    messages.append({"role": "user", "content": prompt})
+    return messages

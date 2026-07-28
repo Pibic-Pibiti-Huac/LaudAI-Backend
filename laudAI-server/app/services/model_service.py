@@ -22,9 +22,9 @@ class ModelService:
             temperature=0.0
         )
 
-    async def default_chat(self, chat_user_text: str):
+    async def default_chat(self, chat_user_text: str, history: list[dict] | None = None, laudo_text: str | None = None):
             return await self.chat(
-                messages=default_prompt_model(chat_user_text)
+                messages=default_prompt_model(chat_user_text, history, laudo_text)
             )
 
     async def chat(self, messages: list[dict], model: str = "qwen3-8b", temperature: float = 0.7):

@@ -48,7 +48,11 @@ async def model_analyze_report_by_text(query: MessageReportText, token_data: Tok
     description="endpoint para o LLM responder normalmente."
 )
 async def model_chat(query: MessageModel,  token_data: TokenProviderData = Depends(verify_token)) -> MessageModelResponse:
-    content, thinking = await service.default_chat(query.prompt)
+    content, thinking = await service.default_chat(
+        query.prompt,
+        query.history,
+        query.laudo_text,
+    )
 
     return MessageModelResponse(
         role="assistant",
