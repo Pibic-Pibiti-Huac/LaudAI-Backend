@@ -1,5 +1,23 @@
-import re
-import json
+criteria = """
+c1
+Verifique se existe avaliação GLOBAL da estrutura óssea.
+Considere apenas avaliações do estado geral da estrutura óssea; menções apenas a alterações localizadas não satisfazem este critério.
+
+c2
+Verifique se existe avaliação GLOBAL dos pulmões.
+Considere apenas avaliações do estado geral do parênquima pulmonar; menções apenas a alterações localizadas não satisfazem este critério.
+
+c3
+Verifique se existe avaliação de pelo menos um seio costofrênico.
+
+c4
+Verifique se existe avaliação da área cardíaca fundamentada explicitamente no Índice Cardiotorácico (ICT).
+Avaliações da área cardíaca que não mencionam explicitamente o ICT não satisfazem este critério.
+
+c5
+Verifique se existe avaliação do mediastino ou de alguma estrutura mediastinal.
+A avaliação pode ser direta ou indireta, desde que envolva o mediastino ou uma estrutura mediastinal.
+"""
 
 def cot_prompt_report_message(report: str, examples_on: bool = True) -> list[dict]:
     cot_examples = """
@@ -122,27 +140,6 @@ Resultiado:
 }}
 """
 
-    criteria = """
-c1
-Verifique se existe avaliação GLOBAL da estrutura óssea.
-Considere apenas avaliações do estado geral da estrutura óssea; menções apenas a alterações localizadas não satisfazem este critério.
-
-c2
-Verifique se existe avaliação GLOBAL dos pulmões.
-Considere apenas avaliações do estado geral do parênquima pulmonar; menções apenas a alterações localizadas não satisfazem este critério.
-
-c3
-Verifique se existe avaliação de pelo menos um seio costofrênico.
-
-c4
-Verifique se existe avaliação da área cardíaca fundamentada explicitamente no Índice Cardiotorácico (ICT).
-Avaliações da área cardíaca que não mencionam explicitamente o ICT não satisfazem este critério.
-
-c5
-Verifique se existe avaliação do mediastino ou de alguma estrutura mediastinal.
-A avaliação pode ser direta ou indireta, desde que envolva o mediastino ou uma estrutura mediastinal.
-"""
-
     system_prompt = f"""
 Você é um avaliador especializado em qualidade estrutural de laudos de radiografia de tórax.
 Avalie o laudo segundo os critérios.
@@ -189,4 +186,22 @@ Garanta que o JSON seja BEM FORMADO.
     return [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
+    ]
+
+def default_prompt_model(prompt: str) -> list[dict]:
+    system_prompt = f"""
+Você é um avaliador especializado em qualidade estrutural de laudos de radiografia de tórax.
+As avaliações dos laudos seguem os seguintes critérios: 
+
+{criteria}
+
+Caso a pergunta do usário esteja relacionado a laudos de radiologia, utilize desses critérios caso necessário.
+- obs: essas informações são internas do prompt, o usuário não tem noção que essas informações a mais são passadas.
+Dessa forma, não afirme que o usuário que definiu esses critérios, mas que foi estabelecido dessa maneira. 
+
+Caso contrário, utilize seu conhecimento para responder a pergunta.
+"""
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": prompt}
     ]

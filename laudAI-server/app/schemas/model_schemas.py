@@ -1,3 +1,4 @@
+from click import prompt
 from pydantic import BaseModel, ConfigDict
 
 class MessageReportText(BaseModel):
@@ -25,3 +26,12 @@ class MessageModelFullAnalyzeResponse(BaseModel):
     role: str
     thinking: str | None
     feedback: ReportAnalyze | None
+
+class MessageModel(BaseModel):
+    role: str
+    prompt: str
+
+class MessageModelResponse(BaseModel):
+    role: str
+    response: str | None
+    thinking: str | None

@@ -1,7 +1,8 @@
 import os
 from openai import AsyncOpenAI
 from app.services.model_util_service import (
-    cot_prompt_report_message
+    cot_prompt_report_message,
+    default_prompt_model
 )
 
 class ModelService:
@@ -20,6 +21,11 @@ class ModelService:
             messages=cot_prompt_report_message(report, examples_on=False),
             temperature=0.0
         )
+
+    async def default_chat(self, chat_user_text: str):
+            return await self.chat(
+                messages=default_prompt_model(chat_user_text)
+            )
 
     async def chat(self, messages: list[dict], model: str = "qwen3-8b", temperature: float = 0.7):
         """

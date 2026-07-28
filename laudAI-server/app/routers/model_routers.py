@@ -6,7 +6,9 @@ from fastapi import (
 )
 from app.schemas.auth_schemas import TokenProviderData
 from app.schemas.model_schemas import (
+    MessageModel,
     MessageModelFullAnalyzeResponse,
+    MessageModelResponse,
     MessageReportText
 )
 from app.services.model_service import ModelService 
@@ -23,7 +25,7 @@ service = ModelService()
     status_code=200,
     description="endpoint para o LLM analizar todo o laudo pelo texto fornecido."
 )
-async def model_analyze_report_by_text(query: MessageReportText, toke_data: TokenProviderData = Depends(verify_token)) -> MessageModelFullAnalyzeResponse:
+async def model_analyze_report_by_text(query: MessageReportText, token_data: TokenProviderData = Depends(verify_token)) -> MessageModelFullAnalyzeResponse:
     content, thinking = await service.report_analyze_by_text(query.report)
 
     try:
@@ -37,5 +39,19 @@ async def model_analyze_report_by_text(query: MessageReportText, toke_data: Toke
     return MessageModelFullAnalyzeResponse(
         role="assistant",
         feedback=parsed_content,
+        thinking=thinking
+    )
+
+@router.post(
+    "/message",
+    status_code=200,
+    description="endpoint para o LLM responder normalmente."
+)
+async def model_chat(query: MessageModel) -> MessageModelResponse:
+    content, thinking = await service.default_chat(query.prompt)
+
+    return MessageModelResponse(
+        role="assistant",
+        response=content,
         thinking=thinking
     )
