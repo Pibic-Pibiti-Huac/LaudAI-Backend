@@ -4,6 +4,7 @@ from fastapi import (
     Depends,
     HTTPException
 )
+from fastapi.responses import StreamingResponse
 from app.schemas.auth_schemas import TokenProviderData
 from app.schemas.model_schemas import (
     MessageModel,
@@ -58,4 +59,19 @@ async def model_chat(query: MessageModel,  token_data: TokenProviderData = Depen
         role="assistant",
         response=content,
         thinking=thinking
+    )
+
+@router.post(
+    "/message/stream",
+    status_code=200,
+    description="endpoint para o LLM responder com streaming (SSE)."
+)
+async def model_chat_stream(query: MessageModel, token_data: TokenProviderData = Depends(verify_token)):
+    return StreamingResponse(
+        service.default_chat_stream(query.prompt, query.history, query.laudo_text),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
     )
