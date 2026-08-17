@@ -1,3 +1,5 @@
+import json
+
 criteria = """
 c1
 Verifique se existe avaliação GLOBAL da estrutura óssea.
@@ -214,3 +216,37 @@ Caso contrário, utilize seu conhecimento para responder a pergunta.
 
     messages.append({"role": "user", "content": prompt})
     return messages
+
+def correct_report_prompt_model(laudo_text: str, evaluation: dict | None = None) -> list[dict]:
+    system_prompt = f"""
+Você é um radiologista especializado em radiografia de tórax e na elaboração de laudos radiológicos.
+Um laudo de radiografia de tórax bem estruturado deve apresentar, em formato de lista de achados, avaliações sobre:
+
+1. Estrutura óssea (avaliação global, ex.: coluna dorsal, densidade óssea, espondilose, cifose).
+2. Pulmões (avaliação global do parênquima pulmonar, ex.: transparência pulmonar).
+3. Seios costofrênicos (avaliação de pelo menos um, ex.: livres, obliterados).
+4. Área cardíaca, fundamentada no Índice Cardiotorácico (ICT), ex.: preservado, aumentado.
+5. Mediastino ou estrutura mediastinal, ex.: aorta torácica, crossa da aorta.
+
+O usuário solicitou o laudo CORRIGIDO. Gere uma versão corrigida e completa do laudo original, em formato de lista
+(um item por linha, iniciado por "- "), cobrindo as cinco áreas acima.
+Mantenha os achados corretos do laudo original e complemente/corrija somente o necessário para que o laudo fique
+completo, coerente e tecnicamente adequado, sem inventar achados que contrariem o laudo original.
+A avaliação inicial (contexto interno abaixo) indica quais critérios o laudo original atendeu e quais não atendeu;
+use-a para guiar a correção.
+As informações de critérios e da avaliação são internas e NÃO devem ser mencionadas ao usuário.
+Responda somente com o laudo corrigido, sem textos fora da lista.
+"""
+    user_prompt = f"""
+LAUDO ORIGINAL:
+--------------------
+{laudo_text}
+--------------------
+
+AVALIAÇÃO INICIAL (contexto interno):
+{json.dumps(evaluation, ensure_ascii=False, indent=2) if evaluation else "não disponível"}
+"""
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]

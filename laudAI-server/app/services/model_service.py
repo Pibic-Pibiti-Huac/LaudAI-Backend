@@ -3,6 +3,7 @@ import json
 from openai import AsyncOpenAI
 from app.services.model_util_service import (
     cot_prompt_report_message,
+    correct_report_prompt_model,
     default_prompt_model
 )
 
@@ -34,6 +35,20 @@ class ModelService:
             model="qwen3-8b",
             messages=messages,
             temperature=0.7,
+            stream=True,
+        )
+        async for chunk in stream:
+            token = chunk.choices[0].delta.content
+            if token:
+                yield f"data: {json.dumps({'token': token})}\n\n"
+        yield "data: [DONE]\n\n"
+
+    async def correct_report_stream(self, laudo_text: str, evaluation: dict | None = None):
+        messages = correct_report_prompt_model(laudo_text, evaluation)
+        stream = await self.client.chat.completions.create(
+            model="qwen3-8b",
+            messages=messages,
+            temperature=0.0,
             stream=True,
         )
         async for chunk in stream:

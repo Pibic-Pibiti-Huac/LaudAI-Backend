@@ -33,6 +33,11 @@ class MessageModel(BaseModel):
     history: list[dict] = []
     laudo_text: str = ""
 
+class MessageCorrectReport(BaseModel):
+    role: str
+    laudo_text: str
+    evaluation: dict | None = None
+
 class MessageModelResponse(BaseModel):
     role: str
     response: str | None

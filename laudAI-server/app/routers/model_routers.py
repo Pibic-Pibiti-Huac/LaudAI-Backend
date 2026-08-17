@@ -7,6 +7,7 @@ from fastapi import (
 from fastapi.responses import StreamingResponse
 from app.schemas.auth_schemas import TokenProviderData
 from app.schemas.model_schemas import (
+    MessageCorrectReport,
     MessageModel,
     MessageModelFullAnalyzeResponse,
     MessageModelResponse,
@@ -69,6 +70,21 @@ async def model_chat(query: MessageModel,  token_data: TokenProviderData = Depen
 async def model_chat_stream(query: MessageModel, token_data: TokenProviderData = Depends(verify_token)):
     return StreamingResponse(
         service.default_chat_stream(query.prompt, query.history, query.laudo_text),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+@router.post(
+    "/correct/report",
+    status_code=200,
+    description="endpoint para gerar o laudo corrigido, seguindo os criterios de avaliacao e usando a avaliacao inicial como contexto interno."
+)
+async def model_correct_report(query: MessageCorrectReport, token_data: TokenProviderData = Depends(verify_token)):
+    return StreamingResponse(
+        service.correct_report_stream(query.laudo_text, query.evaluation),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
