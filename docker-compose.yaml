@@ -1,0 +1,67 @@
+services:
+  llamacpp-qwen3:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: llamacpp-qwen3-8b
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./model:/models
+    environment:
+      - LLAMACPP_API_KEY=${LLAMACPP_API_KEY}
+    command: >
+      -m /models/qwen3-8B-GGUF/Qwen3-8B-Q4_K_M.gguf
+      --host 0.0.0.0
+      --port 8000
+      -ngl 99
+      -c 8192
+      -np 1
+      -ctk q8_0
+      -ctv q8_0
+      -t 6
+      -b 512
+      -ub 128
+      --jinja
+      --reasoning-format deepseek
+      --flash-attn on
+      --no-mmap
+      --keep -1
+      --api-key ${LLAMACPP_API_KEY}
+    devices:
+      - nvidia.com/gpu=all
+    deploy:
+      resources:
+        limits:
+          memory: 10G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      start_period: 90s
+    networks:
+      - laudai-net
+
+  fastapi:
+    build: 
+      context: ./laudAI-server
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./laudAI-server:/app
+    environment:
+      - LLAMACPP_API_KEY=${LLAMACPP_API_KEY}
+      - LLAMACPP_BASE_URL=http://llamacpp-qwen3:8000
+    depends_on:
+      llamacpp-qwen3:
+        condition: service_healthy
+    networks:
+      - laudai-net
+      - app-network
+    command: uv run fastapi dev --host 0.0.0.0 --port 8000 
+
+networks:
+  app-network:
+    external: true
+  laudai-net:
+    driver: bridge
