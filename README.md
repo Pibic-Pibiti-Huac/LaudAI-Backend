@@ -1,105 +1,100 @@
 # LaudAI-Backend
 
-## Como subir a aplicação
+## How to run the application
 
-1. Baixe o docker engine [link](https://docs.docker.com/engine/install/ubuntu/)
-2. Instale o **NVIDIA Container Toolkit** para utilizar a GPU [link](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
-3. Baixe o modelo **Qwen3-8B GGUF** e coloque-o em `./model/qwen3-8B-GGUF/`:
+1. Download Docker Engine [link](https://docs.docker.com/engine/install/ubuntu/)
+2. Install the **NVIDIA Container Toolkit** to use the GPU [link](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+3. Download the **Qwen3-8B GGUF** model and place it in `./model/qwen3-8B-GGUF/`:
 
 ```bash
 mkdir -p model/qwen3-8B-GGUF
-wget https://huggingface.co/Qwen/Qwen3-8B-GGUF/resolve/main/Qwen3-8B-Q4_K_M.gguf -O model/qwen3-8B-GGUF/Qwen3-8B-Q4_K_M.gguf
+cd model/qwen3-8B-GGUF
+hf download hf://Qwen/Qwen2.5-7B-Instruct-GGUF/qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf --local-dir .
 ```
 
-4. Configure o arquivo `.env` na raiz:
+4. Configure the `.env` file at the project root:
 
 ```bash
 cp .env.example .env
 ```
 
-5. Coloque as credenciais do Firebase em `laudAI-server/config/firebase/firebase-auth.json` e configure o `laudAI-server/.env`:
+5. Place the Firebase credentials in `laudAI-server/config/firebase/firebase-auth.json` and configure `laudAI-server/.env`:
 
 ```bash
 cp laudAI-server/.env.example laudAI-server/.env
 ```
 
-6. Crie a **rede** utilizada na integração com o Frontend:
+6. Run the command:
 
 ```bash
-docker network create app-network
+docker compose up --build -d
 ```
 
-7. Rode o comando:
+7. Now access the API at `http://localhost:8001` (the interactive Swagger documentation is available at `http://localhost:8001/docs` and the health check at `http://localhost:8001/health`)
+8. Done, the Backend is ready to use
+
+**Note: Docker commands that may be useful**
 
 ```bash
-docker compose up --build
+docker compose up -d # doesn't show logs in the terminal and frees it up for use.
+docker logs fastapi # shows the FastAPI server logs.
+docker logs llamacpp-qwen3-8b # shows the model logs.
+docker compose down # tear down the container.
+docker compose down -v # tear down the container and remove the saved data volume.
 ```
 
-8. Agora acesse a API em `http://localhost:8001` (a documentação interativa do Swagger fica em `http://localhost:8001/docs` e o health check em `http://localhost:8001/health`)
-9. Pronto, o Backend está pronto para uso
-
-**Obs: Comandos que podem ser úteis com docker** 
-
-```bash
-docker compose up -d # não mostra os logs no terminal e permite o uso do mesmo.
-docker logs fastapi # mostra os logs do servidor FastAPI.
-docker logs llamacpp-qwen3-8b # mostra os logs do modelo.
-docker compose down # destruir o container.
-docker compose down -v # destruir o container e remover o volume de dados salvos/
-```
-
-## Estrutura do Projeto
+## Project Structure
 
 ```
 .
-├── docker-compose.yaml              # Orquestra llama.cpp (Qwen3-8B) + servidor FastAPI
-├── .env.example                     # LLAMACPP_BASE_URL e LLAMACPP_API_KEY
-├── model/                           # Modelo Qwen3-8B GGUF (não versionado)
+├── docker-compose.yaml              # Orchestrates llama.cpp (Qwen3-8B) + FastAPI server
+├── .env.example                     # LLAMACPP_BASE_URL and LLAMACPP_API_KEY
+├── model/                           # Qwen3-8B GGUF model (not versioned)
 │   └── qwen3-8B-GGUF/
-│       └── Qwen3-8B-Q4_K_M.gguf     # Arquivo do modelo quantizado
+│       └── Qwen3-8B-Q4_K_M.gguf     # Quantized model file
 └── laudAI-server/
     ├── app/
-    │   ├── main.py                  # Instância FastAPI (root_path /api/v1) + health check
+    │   ├── main.py                  # FastAPI instance (root_path /api/v1) + health check
     │   ├── core/
-    │   │   ├── config_app.py        # Registro de routers e middleware CORS
-    │   │   └── settings.py          # Configurações via Pydantic (variáveis do .env)
+    │   │   ├── config_app.py        # Router registration and CORS middleware
+    │   │   └── settings.py          # Settings via Pydantic (.env variables)
     │   ├── routers/
-    │   │   └── model_routers.py     # Endpoints de análise, chat, streaming e correção do laudo
+    │   │   └── model_routers.py     # Endpoints for analysis, chat, streaming, and report correction
     │   ├── schemas/
-    │   │   ├── auth_schemas.py      # Tipos de dados do token Firebase (uid, email, role)
-    │   │   └── model_schemas.py     # Schemas Pydantic de request/response do modelo
+    │   │   ├── auth_schemas.py      # Firebase token data types (uid, email, role)
+    │   │   └── model_schemas.py     # Pydantic request/response schemas for the model
     │   └── services/
-    │       ├── auth_service.py      # Inicialização do Firebase + verificação de token Bearer
-    │       ├── model_service.py     # Cliente OpenAI compatível com a API do llama.cpp
-    │       └── model_util_service.py # Prompts do modelo (critérios, CoT, chat e correção)
+    │       ├── auth_service.py      # Firebase initialization + Bearer token verification
+    │       ├── model_service.py     # OpenAI-compatible client for the llama.cpp API
+    │       └── model_util_service.py # Model prompts (criteria, CoT, chat, and correction)
     ├── config/
     │   └── firebase/
-    │       └── firebase-auth.json   # Credenciais do Firebase (não versionado)
-    ├── Dockerfile                   # Imagem do servidor FastAPI (uv + python 3.13)
-    ├── pyproject.toml               # Dependências e configuração do projeto (fastapi, firebase-admin, openai)
+    │       └── firebase-auth.json   # Firebase credentials (not versioned)
+    ├── Dockerfile                   # FastAPI server image (uv + python 3.13)
+    ├── pyproject.toml               # Project dependencies and configuration (fastapi, firebase-admin, openai)
     └── .env.example                 # PATH_FIREBASE_CREDENTIALS
 ```
 
-## Integrar com o Frontend 
+## Integrating with the Frontend
 
-1. Clonar o Repositório no mesmo local do repositório do Backend
+1. Clone the repository in the same location as the Backend repository
 
 ```bash
 git clone https://github.com/Pibic-Pibiti-Huac/LaudAI-Frontend.git
 ```
 
-2. Criar a **rede** entre os dois containers (se ainda não existir)
+2. Create the **network** between the two containers (if it doesn't already exist)
 
 ```bash
 docker network create app-network
 ```
 
-3. Suba o Backend executando `docker compose up --build` na raiz do repositório
+3. Start the Backend by running `docker compose up --build -d` at the root of the repository
 
-4. No Frontend, defina a URL da API no `.env` do app (`laudAI-app/.env`):
+4. In the Frontend, set the API URL in the app's `.env` (`laudAI-app/.env`):
 
 ```env
 VITE_API_URL="http://localhost:8001"
 ```
 
-5. Suba o Frontend com `docker compose up --build` e acesse o endereço disponibilizado pelo **VITE**
+5. Start the Frontend with `docker compose up --build -d` and access the address provided by **VITE**
